@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}ShopFlow - Modern Online Shopping Platform{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <!-- Hero Section -->
+  <div class="hero-banner mb-5 shadow-lg">
+    <div class="row align-items-center">
+      <div class="col-lg-7">
+        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-semibold mb-3">
+          <i class="bi bi-stars me-1"></i> New Season Arrivals &bull; Up to 40% Off
+        </span>
+        <h1 class="display-4 fw-bold mb-3">Elevate Your Everyday Essentials</h1>
+        <p class="lead text-white-50 mb-4">
+          Discover handpicked electronics, premium apparel, modern workspace furniture, and essential software engineering literature. Fast simulated checkout and real-time order tracking.
+        </p>
+        <div class="d-flex flex-wrap gap-3">
+          <a href="{{ url_for('main.products') }}" class="btn btn-light btn-lg rounded-pill px-4 fw-semibold text-primary shadow-sm">
+            <i class="bi bi-cart3 me-2"></i> Browse Products
+          </a>
+          <a href="#categories-section" class="btn btn-outline-light btn-lg rounded-pill px-4 fw-semibold">
+            Explore Categories
+          </a>
+        </div>
+      </div>
+      <div class="col-lg-5 d-none d-lg-block text-center position-relative">
+        <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80" alt="Featured Tech" class="img-fluid rounded-4 shadow-lg border border-2 border-white border-opacity-25" style="max-height: 320px; object-fit: cover;">
+      </div>
+    </div>
+  </div>
+
+  <!-- Highlights / Value Propositions -->
+  <div class="row g-3 mb-5">
+    <div class="col-md-3 col-6">
+      <div class="p-3 bg-white rounded-3 border d-flex align-items-center gap-3 shadow-sm h-100">
+        <div class="rounded-circle bg-primary-subtle text-primary p-3 fs-4 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+          <i class="bi bi-truck"></i>
+        </div>
+        <div>
+          <h6 class="fw-bold mb-0">Free Delivery</h6>
+          <small class="text-muted">On all orders over $50</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="p-3 bg-white rounded-3 border d-flex align-items-center gap-3 shadow-sm h-100">
+        <div class="rounded-circle bg-success-subtle text-success p-3 fs-4 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+          <i class="bi bi-shield-check"></i>
+        </div>
+        <div>
+          <h6 class="fw-bold mb-0">Safe Transactions</h6>
+          <small class="text-muted">Simulated COD & instant pay</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="p-3 bg-white rounded-3 border d-flex align-items-center gap-3 shadow-sm h-100">
+        <div class="rounded-circle bg-info-subtle text-info p-3 fs-4 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+          <i class="bi bi-arrow-repeat"></i>
+        </div>
+        <div>
+          <h6 class="fw-bold mb-0">Live Order Tracking</h6>
+          <small class="text-muted">Real-time status progression</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="p-3 bg-white rounded-3 border d-flex align-items-center gap-3 shadow-sm h-100">
+        <div class="rounded-circle bg-warning-subtle text-warning p-3 fs-4 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+          <i class="bi bi-headset"></i>
+        </div>
+        <div>
+          <h6 class="fw-bold mb-0">24/7 Support</h6>
+          <small class="text-muted">Dedicated student project help</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Browse by Category -->
+  <div id="categories-section" class="mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+      <div>
+        <h2 class="fw-bold mb-1">Browse by Category</h2>
+        <p class="text-muted mb-0">Explore our curated collections across major categories</p>
+      </div>
+      <a href="{{ url_for('main.products') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+        View All <i class="bi bi-arrow-right ms-1"></i>
+      </a>
+    </div>
+
+    <div class="row g-3">
+      {% for category in categories %}
+        <div class="col-lg-3 col-md-6">
+          <a href="{{ url_for('main.products', category=category.slug) }}" class="category-card p-4 text-center d-block h-100 shadow-sm">
+            <div class="category-icon-box">
+              <i class="bi {{ category.icon }}"></i>
+            </div>
+            <h5 class="fw-bold mb-1">{{ category.name }}</h5>
+            <p class="text-muted small mb-2">{{ category.description|truncate(60) }}</p>
+            <span class="badge bg-light text-primary border rounded-pill px-3 py-1 fw-medium">
+              {{ category.products.count() }} Products
+            </span>
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Featured Products Section -->
+  <div class="mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+      <div>
+        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 mb-2 fw-semibold">Handpicked For You</span>
+        <h2 class="fw-bold mb-1">Featured Products</h2>
+        <p class="text-muted mb-0">Our most popular top-rated items ready for instant order</p>
+      </div>
+      <a href="{{ url_for('main.products') }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
+        View All Catalog <i class="bi bi-arrow-right ms-1"></i>
+      </a>
+    </div>
+
+    <div class="row g-4">
+      {% for product in featured_products %}
+        <div class="col-xl-3 col-lg-4 col-md-6">
+          <div class="product-card shadow-sm">
+            <div class="product-image-container">
+              {% if product.is_featured %}
+                <span class="badge-featured"><i class="bi bi-star-fill me-1"></i> Featured</span>
+              {% endif %}
+
+              {% if product.stock <= 0 %}
+                <span class="badge-stock bg-danger text-white">Out of Stock</span>
+              {% elif product.stock <= 5 %}
+                <span class="badge-stock bg-warning text-dark">Low Stock ({{ product.stock }})</span>
+              {% else %}
+                <span class="badge-stock bg-success text-white">In Stock</span>
+              {% endif %}
+
+              <a href="{{ url_for('main.product_detail', product_id=product.id) }}">
+                <img src="{{ product.image_url }}" alt="{{ product.name }}" loading="lazy" onerror="this.src='/static/images/placeholder.svg'">
+              </a>
+            </div>
+
+            <div class="product-card-body">
+              <span class="text-muted small text-uppercase fw-semibold mb-1">{{ product.category.name if product.category else 'General' }}</span>
+              <h3 class="product-title">
+                <a href="{{ url_for('main.product_detail', product_id=product.id) }}" title="{{ product.name }}">
+                  {{ product.name }}
+                </a>
+              </h3>
+              <p class="text-muted small flex-grow-1 mb-3">
+                {{ product.description|truncate(80) }}
+              </p>
+
+              <div class="d-flex align-items-center justify-content-between mt-auto pt-2 border-top">
+                <span class="product-price">{{ product.price|currency }}</span>
+
+                {% if product.in_stock %}
+                  <form class="form-add-to-cart" action="{{ url_for('cart.add_to_cart') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    <input type="hidden" name="quantity" value="1">
+                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm" title="Add to Cart">
+                      <i class="bi bi-cart-plus me-1"></i> Add
+                    </button>
+                  </form>
+                {% else %}
+                  <button class="btn btn-sm btn-secondary rounded-pill px-3" disabled>Sold Out</button>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Student Assignment & Demonstration Banner -->
+  <div class="card bg-light border-primary border-opacity-25 rounded-4 p-4 shadow-sm my-5">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h4 class="fw-bold text-dark mb-2">
+          <i class="bi bi-laptop-fill text-primary me-2"></i> Ready for B.Tech CSE Viva Demonstration
+        </h4>
+        <p class="text-muted mb-0">
+          This system includes a full admin panel for product inventory and order tracking, transactional checkout with stock synchronization, CSRF & role-based route protection, and RESTful APIs documented for viva examiners.
+        </p>
+      </div>
+      <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <a href="{{ url_for('auth.login') }}" class="btn btn-primary rounded-pill px-4 shadow-sm fw-medium">
+          Try Admin / User Login <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

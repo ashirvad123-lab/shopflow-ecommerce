@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Users - Admin - ShopFlow{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <a href="{{ url_for('admin.dashboard') }}" class="text-decoration-none small text-muted">&larr; Back to Dashboard</a>
+      </div>
+      <h2 class="fw-bold mb-0 mt-1">Registered User Accounts</h2>
+    </div>
+
+    <!-- Search -->
+    <div style="min-width: 280px;">
+      <form action="{{ url_for('admin.users') }}" method="GET">
+        <div class="input-group input-group-sm">
+          <input type="text" class="form-control rounded-start-pill ps-3" name="search" placeholder="Search user or email..." value="{{ search_query }}">
+          <button class="btn btn-primary rounded-end-pill px-3" type="submit"><i class="bi bi-search"></i></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+    <div class="table-responsive">
+      <table class="table align-middle table-hover mb-0">
+        <thead class="bg-light text-muted small text-uppercase">
+          <tr>
+            <th scope="col" class="ps-4">User ID</th>
+            <th scope="col">User</th>
+            <th scope="col">Email</th>
+            <th scope="col" class="text-center">Role</th>
+            <th scope="col" class="text-center">Orders Placed</th>
+            <th scope="col" class="text-end pe-4">Registered Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for usr in users %}
+            <tr>
+              <td class="ps-4 font-monospace small text-muted">#{{ usr.id }}</td>
+
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center fw-bold" style="width: 34px; height: 34px;">
+                    {{ usr.username[0]|upper }}
+                  </div>
+                  <div>
+                    <div class="fw-bold text-dark">{{ usr.full_name or usr.username }}</div>
+                    <small class="text-muted">@{{ usr.username }}</small>
+                  </div>
+                </div>
+              </td>
+
+              <td class="small">{{ usr.email }}</td>
+
+              <td class="text-center">
+                <span class="badge {% if usr.is_admin %}bg-danger{% else %}bg-primary{% endif %} rounded-pill px-3 py-1">
+                  {{ usr.role|capitalize }}
+                </span>
+              </td>
+
+              <td class="text-center fw-semibold">
+                {{ usr.orders.count() }}
+              </td>
+
+              <td class="text-end pe-4 small text-muted">
+                {{ usr.created_at.strftime('%b %d, %Y') if usr.created_at else 'N/A' }}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Products Catalog - ShopFlow{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <!-- Breadcrumbs & Header -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Products</li>
+      {% if selected_category %}
+        <li class="breadcrumb-item active" aria-current="page">{{ selected_category.name }}</li>
+      {% endif %}
+    </ol>
+  </nav>
+
+  <div class="row g-4">
+    <!-- Sidebar Filters -->
+    <div class="col-lg-3">
+      <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 sticky-lg-top" style="top: 80px;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-funnel me-1 text-primary"></i> Filters</h5>
+          {% if selected_category or search_query or stock_filter %}
+            <a href="{{ url_for('main.products') }}" class="btn btn-sm btn-link text-danger p-0 text-decoration-none small">
+              Reset all
+            </a>
+          {% endif %}
+        </div>
+
+        <!-- Search in Catalog -->
+        <form action="{{ url_for('main.products') }}" method="GET" class="mb-4">
+          {% if selected_category %}
+            <input type="hidden" name="category" value="{{ selected_category.slug }}">
+          {% endif %}
+          {% if sort_by %}
+            <input type="hidden" name="sort" value="{{ sort_by }}">
+          {% endif %}
+          <label class="form-label small fw-semibold text-muted">Keyword Search</label>
+          <div class="input-group">
+            <input type="text" name="search" class="form-control form-control-sm" placeholder="Search product..." value="{{ search_query }}">
+            <button class="btn btn-outline-secondary btn-sm" type="submit"><i class="bi bi-search"></i></button>
+          </div>
+        </form>
+
+        <!-- Categories Filter -->
+        <div class="mb-4">
+          <label class="form-label small fw-semibold text-muted text-uppercase mb-2">Categories</label>
+          <div class="list-group list-group-flush small">
+            <a href="{{ url_for('main.products', search=search_query, sort=sort_by, stock=stock_filter) }}" 
+               class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 d-flex justify-content-between align-items-center {% if not selected_category %}bg-primary text-white active{% endif %}">
+              <span>All Categories</span>
+            </a>
+            {% for cat in categories %}
+              <a href="{{ url_for('main.products', category=cat.slug, search=search_query, sort=sort_by, stock=stock_filter) }}" 
+                 class="list-group-item list-group-item-action border-0 px-2 py-2 rounded-2 d-flex justify-content-between align-items-center {% if selected_category and selected_category.id == cat.id %}bg-primary text-white active{% endif %}">
+                <span><i class="bi {{ cat.icon }} me-2"></i>{{ cat.name }}</span>
+                <span class="badge rounded-pill {% if selected_category and selected_category.id == cat.id %}bg-white text-primary{% else %}bg-light text-muted{% endif %}">
+                  {{ cat.products.count() }}
+                </span>
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Availability Filter -->
+        <div class="mb-3">
+          <label class="form-label small fw-semibold text-muted text-uppercase mb-2">Availability</label>
+          <div class="d-flex flex-column gap-2 small">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="stock_filter_radio" id="stockAll" 
+                     onchange="location.href='{{ url_for('main.products', category=selected_category.slug if selected_category else None, search=search_query, sort=sort_by) }}'"
+                     {% if not stock_filter %}checked{% endif %}>
+              <label class="form-check-label" for="stockAll">All items</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="stock_filter_radio" id="stockIn" 
+                     onchange="location.href='{{ url_for('main.products', category=selected_category.slug if selected_category else None, search=search_query, sort=sort_by, stock='in_stock') }}'"
+                     {% if stock_filter == 'in_stock' %}checked{% endif %}>
+              <label class="form-check-label" for="stockIn">In stock only</label>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Product Grid Column -->
+    <div class="col-lg-9">
+      <!-- Toolbar: Result Count & Sort Selector -->
+      <div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+          <div>
+            <h4 class="fw-bold mb-0">
+              {% if selected_category %}
+                {{ selected_category.name }}
+              {% elif search_query %}
+                Search: "{{ search_query }}"
+              {% else %}
+                All Products
+              {% endif %}
+            </h4>
+            <span class="text-muted small">Showing {{ total_results }} items</span>
+          </div>
+
+          <!-- Sorting dropdown -->
+          <div class="d-flex align-items-center gap-2">
+            <label class="small text-muted fw-semibold text-nowrap mb-0">Sort By:</label>
+            <select class="form-select form-select-sm rounded-pill" style="width: auto;" onchange="location.href=this.value">
+              <option value="{{ url_for('main.products', category=selected_category.slug if selected_category else None, search=search_query, stock=stock_filter, sort='newest') }}" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+              <option value="{{ url_for('main.products', category=selected_category.slug if selected_category else None, search=search_query, stock=stock_filter, sort='price_asc') }}" {% if sort_by == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+              <option value="{{ url_for('main.products', category=selected_category.slug if selected_category else None, search=search_query, stock=stock_filter, sort='price_desc') }}" {% if sort_by == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+              <option value="{{ url_for('main.products', category=selected_category.slug if selected_category else None, search=search_query, stock=stock_filter, sort='name') }}" {% if sort_by == 'name' %}selected{% endif %}>Name: A to Z</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Products Grid -->
+      {% if products %}
+        <div class="row g-4">
+          {% for product in products %}
+            <div class="col-xl-4 col-md-6">
+              <div class="product-card shadow-sm">
+                <div class="product-image-container">
+                  {% if product.is_featured %}
+                    <span class="badge-featured"><i class="bi bi-star-fill me-1"></i> Featured</span>
+                  {% endif %}
+
+                  {% if product.stock <= 0 %}
+                    <span class="badge-stock bg-danger text-white">Out of Stock</span>
+                  {% elif product.stock <= 5 %}
+                    <span class="badge-stock bg-warning text-dark">Low Stock ({{ product.stock }})</span>
+                  {% else %}
+                    <span class="badge-stock bg-success text-white">In Stock</span>
+                  {% endif %}
+
+                  <a href="{{ url_for('main.product_detail', product_id=product.id) }}">
+                    <img src="{{ product.image_url }}" alt="{{ product.name }}" loading="lazy" onerror="this.src='/static/images/placeholder.svg'">
+                  </a>
+                </div>
+
+                <div class="product-card-body">
+                  <span class="text-muted small text-uppercase fw-semibold mb-1">{{ product.category.name if product.category else 'General' }}</span>
+                  <h3 class="product-title">
+                    <a href="{{ url_for('main.product_detail', product_id=product.id) }}" title="{{ product.name }}">
+                      {{ product.name }}
+                    </a>
+                  </h3>
+                  <p class="text-muted small flex-grow-1 mb-3">
+                    {{ product.description|truncate(75) }}
+                  </p>
+
+                  <div class="d-flex align-items-center justify-content-between mt-auto pt-2 border-top">
+                    <span class="product-price">{{ product.price|currency }}</span>
+
+                    {% if product.in_stock %}
+                      <form class="form-add-to-cart" action="{{ url_for('cart.add_to_cart') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                        <input type="hidden" name="quantity" value="1">
+                        <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm" title="Add to Cart">
+                          <i class="bi bi-cart-plus me-1"></i> Add
+                        </button>
+                      </form>
+                    {% else %}
+                      <button class="btn btn-sm btn-secondary rounded-pill px-3" disabled>Sold Out</button>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <!-- No Products Found State -->
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center">
+          <div class="mb-3">
+            <i class="bi bi-search text-muted" style="font-size: 3.5rem;"></i>
+          </div>
+          <h4 class="fw-bold mb-2">No matching products found</h4>
+          <p class="text-muted mb-4">Try clearing your filters or searching for another keyword.</p>
+          <div>
+            <a href="{{ url_for('main.products') }}" class="btn btn-primary rounded-pill px-4">
+              Clear All Filters
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

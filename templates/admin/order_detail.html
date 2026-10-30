@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Order #{{ order.order_number }} - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}" class="text-decoration-none">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('admin.orders') }}" class="text-decoration-none">Orders</a></li>
+      <li class="breadcrumb-item active font-monospace" aria-current="page">{{ order.order_number }}</li>
+    </ol>
+  </nav>
+
+  <!-- Top Action Card -->
+  <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="badge bg-danger rounded-pill px-3 py-1">Admin Order Management</span>
+          <span class="badge {{ order.status_badge }} rounded-pill px-3 py-1">{{ order.status }}</span>
+        </div>
+        <h3 class="fw-bold mb-0 font-monospace text-primary">#{{ order.order_number }}</h3>
+        <div class="text-muted small">Placed on {{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}</div>
+      </div>
+
+      <!-- Update Order Status Form -->
+      <div class="p-3 bg-light rounded-3 border">
+        <form action="{{ url_for('admin.update_order_status', order_id=order.id) }}" method="POST" class="d-flex align-items-center gap-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label class="small fw-semibold text-nowrap mb-0" for="adminOrderStatus">Change Status:</label>
+          <select id="adminOrderStatus" name="status" class="form-select form-select-sm" required>
+            <option value="" selected disabled>Choose next status</option>
+            {% for st in statuses %}
+              <option value="{{ st }}">{{ st }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3" onclick="return confirm('Update this order status?');">
+            Update
+          </button>
+          <input type="text" name="tracking_number" maxlength="100" class="form-control form-control-sm" placeholder="Tracking number (optional)" aria-label="Tracking number">
+          <input type="text" name="courier_name" maxlength="100" class="form-control form-control-sm" placeholder="Courier (optional)" aria-label="Courier name">
+          <input type="text" name="reason" maxlength="1000" class="form-control form-control-sm" placeholder="Status note / cancellation reason" aria-label="Status note or cancellation reason">
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Ordered Items List -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <h5 class="fw-bold mb-3 border-bottom pb-2">Purchased Products ({{ order.items|length }})</h5>
+
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead class="text-muted small text-uppercase">
+              <tr>
+                <th scope="col">Product Item</th>
+                <th scope="col" class="text-center">Price</th>
+                <th scope="col" class="text-center">Quantity</th>
+                <th scope="col" class="text-end">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in order.items %}
+                <tr>
+                  <td>
+                    <div class="fw-bold text-dark">{{ item.product_name }}</div>
+                    {% if item.product_id %}
+                      <small class="text-muted">Product ID: #{{ item.product_id }}</small>
+                    {% endif %}
+                  </td>
+                  <td class="text-center text-muted">{{ item.price|currency }}</td>
+                  <td class="text-center fw-medium">{{ item.quantity }}</td>
+                  <td class="text-end fw-bold text-dark">{{ item.subtotal|currency }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Customer & Financial Details -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <h5 class="fw-bold mb-3 border-bottom pb-2">Customer & Delivery</h5>
+
+        <div class="small mb-3">
+          <div class="text-muted">Full Name:</div>
+          <div class="fw-bold text-dark">{{ order.full_name }}</div>
+        </div>
+
+        <div class="small mb-3">
+          <div class="text-muted">Registered Username:</div>
+          <div class="fw-semibold text-primary">{{ order.user.username }}</div>
+        </div>
+
+        <div class="small mb-3">
+          <div class="text-muted">Shipping Address:</div>
+          <div class="fw-bold text-dark">
+            {{ order.shipping_address }}<br>
+            {{ order.city }}, {{ order.postal_code }}
+          </div>
+          {% if order.has_coordinates %}
+            <div class="mt-1">
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                <i class="bi bi-geo-alt-fill me-1"></i> GPS: {{ "%.4f"|format(order.latitude) }}, {{ "%.4f"|format(order.longitude) }}
+              </span>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Google Maps Delivery Destination Preview for Admin -->
+        <div class="mb-3">
+          <label class="form-label small fw-semibold text-muted d-flex align-items-center gap-1 mb-1">
+            <i class="bi bi-map text-primary"></i> Confirmed Delivery Location Map
+          </label>
+          <div id="orderMap"
+               data-lat="{{ order.latitude or '' }}"
+               data-lng="{{ order.longitude or '' }}"
+               data-address="{{ order.shipping_address }}, {{ order.city }} {{ order.postal_code }}"
+               data-maps-url="{{ order.google_maps_url }}"
+               class="w-100 rounded-3 border overflow-hidden position-relative mb-2"
+               style="height: 200px; min-height: 200px;">
+            <div class="d-flex align-items-center justify-content-center h-100 bg-light text-muted small">
+              <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+              Loading map...
+            </div>
+          </div>
+
+          <a href="{{ order.google_maps_url }}" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill w-100">
+            <i class="bi bi-box-arrow-up-right me-1"></i> Open in Google Maps
+          </a>
+        </div>
+
+        <div class="small mb-3">
+          <div class="text-muted">Contact Info:</div>
+          <div class="text-dark"><strong>Phone:</strong> {{ order.phone }}</div>
+          <div class="text-dark"><strong>Email:</strong> {{ order.email }}</div>
+        </div>
+
+        {% if order.notes %}
+          <div class="small p-2 bg-light rounded mb-3">
+            <span class="text-muted">Customer Notes:</span>
+            <div>{{ order.notes }}</div>
+          </div>
+        {% endif %}
+
+        <hr class="my-3">
+
+        <h5 class="fw-bold mb-3">Financial Overview</h5>
+        <div class="d-flex justify-content-between mb-2 small">
+          <span class="text-muted">Subtotal:</span>
+          <span class="fw-semibold">{{ order.subtotal|currency }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2 small">
+          <span class="text-muted">Shipping Fee:</span>
+          <span class="fw-semibold">{{ order.shipping_fee|currency }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-3 small">
+          <span class="text-muted">Payment:</span>
+          <span class="badge bg-light text-dark border">{{ order.payment_method }} ({{ order.payment_status }})</span>
+        </div>
+        
+{% if order.payment_method and order.payment_method|lower in ['cash on delivery', 'cod'] and order.payment_status|lower == 'pending' %}
+  <form method="POST"
+        action="{{ url_for('admin.confirm_cod_payment', order_id=order.id) }}"
+        onsubmit="return confirm('Confirm that COD payment has actually been received?');"
+        class="mb-3">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn btn-success btn-sm">
+      <i class="bi bi-check-circle me-1"></i> Mark Payment as Paid
+    </button>
+  </form>
+{% endif %}
+
+{% if order.payment_confirmed_at %}
+  <div class="small text-muted mb-3">
+    Payment confirmed on {{ order.payment_confirmed_at.strftime('%b %d, %Y at %I:%M %p') }}
+    {% if order.payment_confirmed_by %}
+      {% set payment_admin = order.payment_history|selectattr('actor_id', 'equalto', order.payment_confirmed_by)|first %}
+      {% if payment_admin and payment_admin.actor %}
+        by {{ payment_admin.actor.username }}
+      {% endif %}
+    {% endif %}
+  </div>
+{% endif %}
+
+        <div class="d-flex justify-content-between mb-3 small">
+          <span class="text-muted">Refund:</span>
+          <span class="badge bg-light text-dark border">{{ order.refund_status }}</span>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-baseline border-top pt-2">
+          <span class="fw-bold fs-6">Grand Total:</span>
+          <span class="fw-bold fs-4 text-primary">{{ order.total_amount|currency }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  {% if order.payment_history %}
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+      <h5 class="fw-bold mb-3">Payment History</h5>
+      <ol class="mb-0">
+        {% for event in order.payment_history %}
+          <li class="mb-2">
+            <strong>{{ event.previous_status }} → {{ event.new_status }}</strong>
+            — {{ event.created_at.strftime('%b %d, %Y at %I:%M %p') }}
+            {% if event.actor %}
+              <span class="text-muted">by {{ event.actor.username }}</span>
+            {% endif %}
+            {% if event.note %}
+              <div class="small text-muted">{{ event.note }}</div>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ol>
+    </div>
+  {% endif %}
+
+
+  {% if order.status_history %}
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+      <h5 class="fw-bold mb-3">Status history</h5>
+      <ol class="mb-0">
+        {% for event in order.status_history %}
+          <li class="mb-2">
+            <strong>{{ event.status }}</strong> — {{ event.created_at.strftime('%b %d, %Y at %I:%M %p') }}
+            {% if event.actor %}<span class="text-muted">by {{ event.actor.username }}</span>{% endif %}
+            {% if event.note %}<div class="small text-muted">{{ event.note }}</div>{% endif %}
+            {% if event.courier_name or event.tracking_number %}
+              <div class="small text-muted">{{ event.courier_name }}{% if event.courier_name and event.tracking_number %} · {% endif %}{{ event.tracking_number }}</div>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ol>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    setupOrderDestinationMap("{{ google_maps_api_key }}");
+  });
+</script>
+{% endblock %}

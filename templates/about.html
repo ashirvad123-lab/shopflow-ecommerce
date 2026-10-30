@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}About This Project - ShopFlow{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+
+      <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5">
+        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 mb-3 fw-semibold align-self-start">
+          Academic Project &bull; B.Tech Computer Science & Engineering
+        </span>
+        <h1 class="fw-bold mb-3">About ShopFlow E-Commerce System</h1>
+        <p class="lead text-muted mb-4">
+          A production-grade, full-stack E-Commerce application architected with Flask, PostgreSQL/SQLite, and Bootstrap 5 to illustrate modern software engineering practices, secure session management, database transactions, and REST APIs.
+        </p>
+
+        <hr class="my-4">
+
+        <h4 class="fw-bold mb-3"><i class="bi bi-layers-fill text-primary me-2"></i> Technology Stack</h4>
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="p-3 bg-light rounded-3 border h-100">
+              <h6 class="fw-bold text-dark"><i class="bi bi-server text-primary me-2"></i> Backend Architecture</h6>
+              <ul class="small text-muted mb-0">
+                <li><strong>Python Flask:</strong> Application factory & Blueprints pattern</li>
+                <li><strong>Flask-SQLAlchemy:</strong> Object-Relational Mapping (ORM)</li>
+                <li><strong>Flask-Login:</strong> Session management & authentication</li>
+                <li><strong>Werkzeug:</strong> Secure salted password hashing (pbkdf2:sha256)</li>
+                <li><strong>Flask-WTF:</strong> CSRF protection on forms and state-changing requests</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="p-3 bg-light rounded-3 border h-100">
+              <h6 class="fw-bold text-dark"><i class="bi bi-window-desktop text-success me-2"></i> Frontend & UI</h6>
+              <ul class="small text-muted mb-0">
+                <li><strong>Bootstrap 5.3:</strong> Responsive mobile-first design grid</li>
+                <li><strong>Bootstrap Icons 1.11:</strong> Modern icon set</li>
+                <li><strong>Vanilla JavaScript (ES6+):</strong> AJAX Add to Cart, dynamic badges & toast notifications</li>
+                <li><strong>Jinja2:</strong> Server-side template rendering with custom currency formatting</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <h4 class="fw-bold mb-3"><i class="bi bi-shield-check text-success me-2"></i> Core Engineering Features</h4>
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <div class="p-3 border rounded-3 bg-white shadow-sm h-100">
+              <h6 class="fw-bold">Database Transactions</h6>
+              <p class="small text-muted mb-0">
+                Checkout operations run inside an atomic database transaction. If inventory is insufficient or an error occurs, the session rolls back to prevent inconsistent states.
+              </p>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="p-3 border rounded-3 bg-white shadow-sm h-100">
+              <h6 class="fw-bold">Role-Based Access Control</h6>
+              <p class="small text-muted mb-0">
+                Enforces strict separation between ordinary customers and administrators. Protected administrative routes reject unauthorized requests with HTTP 403 Forbidden.
+              </p>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="p-3 border rounded-3 bg-white shadow-sm h-100">
+              <h6 class="fw-bold">RESTful JSON APIs</h6>
+              <p class="small text-muted mb-0">
+                Complete API endpoints for products, shopping cart, order placement, and tracking with standardized HTTP methods and status codes.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center pt-3">
+          <a href="{{ url_for('main.products') }}" class="btn btn-primary rounded-pill px-5 fw-semibold shadow-sm">
+            Explore Storefront <i class="bi bi-arrow-right ms-1"></i>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

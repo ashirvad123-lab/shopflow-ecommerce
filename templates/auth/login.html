@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In - ShopFlow{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+
+      <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5">
+        <div class="text-center mb-4">
+          <div class="rounded-circle bg-primary-subtle text-primary mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 56px; height: 56px;">
+            <i class="bi bi-person-fill fs-2"></i>
+          </div>
+          <h3 class="fw-bold mb-1">Welcome Back</h3>
+          <p class="text-muted small">Sign in to access your orders, cart, and account</p>
+        </div>
+
+        <!-- 1-Click Demo Credentials Buttons for Viva/Evaluation -->
+        <div class="p-3 bg-light rounded-3 border mb-4">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <span class="small fw-bold text-dark"><i class="bi bi-lightning-charge-fill text-warning me-1"></i> Quick Demo Accounts</span>
+            <span class="badge bg-secondary-subtle text-secondary small">1-Click Auto Fill</span>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-danger btn-sm w-50 fw-semibold rounded-pill" onclick="fillDemoCredentials('admin')">
+              <i class="bi bi-shield-lock me-1"></i> Demo Admin
+            </button>
+            <button type="button" class="btn btn-outline-primary btn-sm w-50 fw-semibold rounded-pill" onclick="fillDemoCredentials('user')">
+              <i class="bi bi-person-check me-1"></i> Demo Customer
+            </button>
+          </div>
+        </div>
+
+        <form action="{{ url_for('auth.login', next=request.args.get('next')) }}" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="mb-3">
+            <label for="username_or_email" class="form-label small fw-semibold">Username or Email</label>
+            <div class="input-group">
+              <span class="input-group-text bg-white"><i class="bi bi-envelope text-muted"></i></span>
+              <input type="text" class="form-control" id="username_or_email" name="username_or_email" placeholder="e.g. user@shop.com or admin" value="{{ login_identifier or '' }}" required autofocus>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <label for="password" class="form-label small fw-semibold mb-0">Password</label>
+            </div>
+            <div class="input-group mt-1">
+              <span class="input-group-text bg-white"><i class="bi bi-key text-muted"></i></span>
+              <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
+            </div>
+          </div>
+
+          <div class="form-check mb-4">
+            <input class="form-check-input" type="checkbox" id="remember" name="remember" value="true">
+            <label class="form-check-label small text-muted" for="remember">
+              Remember my session on this device
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg rounded-pill w-100 fw-semibold shadow-sm mb-3">
+            <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+          </button>
+
+          <div class="text-center small text-muted">
+            Don't have an account yet? <a href="{{ url_for('auth.register') }}" class="text-decoration-none fw-semibold">Create an account</a>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

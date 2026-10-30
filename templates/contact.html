@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Contact & Support - ShopFlow{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5">
+        <h2 class="fw-bold mb-2"><i class="bi bi-chat-dots text-primary me-2"></i> Contact & Assignment Support</h2>
+        <p class="text-muted mb-4">Have questions regarding the application architecture, APIs, or database setup? Reach out below.</p>
+
+        <div class="row g-4 mb-4">
+          <div class="col-md-6">
+            <div class="p-3 bg-light rounded-3 border">
+              <h6 class="fw-bold mb-1"><i class="bi bi-envelope text-primary me-2"></i> Academic Inquiries</h6>
+              <div class="small text-muted">support@shopflow.local</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="p-3 bg-light rounded-3 border">
+              <h6 class="fw-bold mb-1"><i class="bi bi-code-slash text-success me-2"></i> Source Code & Repo</h6>
+              <div class="small text-muted">B.Tech CSE Capstone Project Assignment</div>
+            </div>
+          </div>
+        </div>
+
+        <form onsubmit="event.preventDefault(); showToast('Thank you! Your demo message has been received.', 'success'); this.reset();">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Your Name</label>
+              <input type="text" class="form-control" required placeholder="John Doe">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Email Address</label>
+              <input type="email" class="form-control" required placeholder="john@example.com">
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Message</label>
+              <textarea class="form-control" rows="4" required placeholder="Describe your inquiry or testing feedback..."></textarea>
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm">
+                Send Demonstration Message
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

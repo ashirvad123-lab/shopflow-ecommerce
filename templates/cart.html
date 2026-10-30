@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Shopping Cart - ShopFlow{% endblock %}
+
+{% block content %}
+<div class="container" id="cart-page-container">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0"><i class="bi bi-cart3 text-primary me-2"></i> Shopping Cart</h2>
+    {% if items %}
+      <form action="{{ url_for('cart.clear_cart') }}" method="POST" onsubmit="return confirm('Are you sure you want to clear your entire cart?');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+          <i class="bi bi-trash3 me-1"></i> Clear Cart
+        </button>
+      </form>
+    {% endif %}
+  </div>
+
+  {% if items %}
+    <div class="row g-4">
+      <!-- Cart Items List -->
+      <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="text-muted small text-uppercase">
+                <tr>
+                  <th scope="col" style="min-width: 250px;">Product</th>
+                  <th scope="col" class="text-center">Price</th>
+                  <th scope="col" class="text-center" style="width: 140px;">Quantity</th>
+                  <th scope="col" class="text-end">Subtotal</th>
+                  <th scope="col" class="text-center" style="width: 50px;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in items %}
+                  <tr id="cart-row-{{ item.id }}" class="cart-item-row">
+                    <td>
+                      <div class="d-flex align-items-center gap-3">
+                        <img src="{{ item.product.image_url }}" alt="{{ item.product.name }}" class="cart-item-img shadow-sm" onerror="this.src='/static/images/placeholder.svg'">
+                        <div>
+                          <h6 class="mb-1 fw-bold">
+                            <a href="{{ url_for('main.product_detail', product_id=item.product.id) }}" class="text-decoration-none text-dark">
+                              {{ item.product.name }}
+                            </a>
+                          </h6>
+                          <span class="badge bg-light text-muted border small">{{ item.product.category.name if item.product.category else 'Product' }}</span>
+                          {% if item.product.stock <= 5 %}
+                            <div class="text-warning small mt-1"><i class="bi bi-exclamation-circle me-1"></i> Only {{ item.product.stock }} left in stock!</div>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </td>
+
+                    <td class="text-center fw-medium">
+                      {{ item.product.price|currency }}
+                    </td>
+
+                    <td>
+                      <div class="input-group input-group-sm justify-content-center">
+                        <button type="button" class="btn btn-outline-secondary btn-cart-qty qty-control-btn" data-item-id="{{ item.id }}" data-action="decrease" title="Decrease quantity">-</button>
+                        <input type="text" class="form-control qty-input bg-light" value="{{ item.quantity }}" readonly>
+                        <button type="button" class="btn btn-outline-secondary btn-cart-qty qty-control-btn" data-item-id="{{ item.id }}" data-action="increase" title="Increase quantity" {% if item.quantity >= item.product.stock %}disabled{% endif %}>+</button>
+                      </div>
+                    </td>
+
+                    <td class="text-end fw-bold text-dark item-subtotal">
+                      {{ item.subtotal|currency }}
+                    </td>
+
+                    <td class="text-center">
+                      <form action="{{ url_for('cart.remove_item', item_id=item.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-link text-danger p-0" title="Remove item">
+                          <i class="bi bi-trash3 fs-5"></i>
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center">
+          <a href="{{ url_for('main.products') }}" class="btn btn-outline-secondary rounded-pill px-4">
+            <i class="bi bi-arrow-left me-2"></i> Continue Shopping
+          </a>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 p-4 sticky-top" style="top: 90px;">
+          <h5 class="fw-bold mb-3">Order Summary</h5>
+
+          {% if free_shipping_eligible %}
+            <div class="alert alert-success d-flex align-items-center gap-2 py-2 small mb-3">
+              <i class="bi bi-check-circle-fill fs-5"></i>
+              <div>Congratulations! You qualified for <strong>Free Standard Shipping</strong>.</div>
+            </div>
+          {% else %}
+            <div class="alert alert-warning py-2 small mb-3">
+              <i class="bi bi-info-circle me-1"></i> Add <strong>${{ (50 - subtotal)|round(2) }}</strong> more for <strong>Free Shipping</strong>!
+            </div>
+          {% endif %}
+
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Items Subtotal:</span>
+            <span id="cart-subtotal" class="fw-semibold">{{ subtotal|currency }}</span>
+          </div>
+
+          <div class="d-flex justify-content-between mb-3">
+            <span class="text-muted">Estimated Shipping:</span>
+            <span id="cart-shipping" class="fw-semibold">
+              {% if shipping_fee == 0 %}
+                <span class="text-success">FREE</span>
+              {% else %}
+                {{ shipping_fee|currency }}
+              {% endif %}
+            </span>
+          </div>
+
+          <hr class="my-2">
+
+          <div class="d-flex justify-content-between align-items-baseline mb-4">
+            <span class="fw-bold fs-5">Total:</span>
+            <span id="cart-grand-total" class="fw-bold fs-4 text-primary">{{ grand_total|currency }}</span>
+          </div>
+
+          <a href="{{ url_for('checkout.checkout_view') }}" class="btn btn-primary btn-lg rounded-pill w-100 fw-semibold shadow-sm mb-3">
+            Proceed to Checkout <i class="bi bi-arrow-right ms-2"></i>
+          </a>
+
+          <div class="small text-muted text-center">
+            <i class="bi bi-shield-lock me-1 text-success"></i> Safe & simulated demonstration checkout.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  {% else %}
+    <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4">
+      <div class="mb-4">
+        <div class="rounded-circle bg-primary-subtle text-primary mx-auto d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+          <i class="bi bi-cart-x fs-1"></i>
+        </div>
+      </div>
+      <h3 class="fw-bold mb-2">Your Shopping Cart is Empty</h3>
+      <p class="text-muted mb-4">Looks like you haven't added anything to your cart yet. Explore our curated collections!</p>
+      <div>
+        <a href="{{ url_for('main.products') }}" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">
+          <i class="bi bi-bag-plus me-2"></i> Start Shopping
+        </a>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

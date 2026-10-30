@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout - ShopFlow{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none">Home</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('cart.view_cart') }}" class="text-decoration-none">Cart</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Checkout</li>
+    </ol>
+  </nav>
+
+  <h2 class="fw-bold mb-4"><i class="bi bi-credit-card-2-front text-primary me-2"></i> Secure Checkout</h2>
+
+  <form action="{{ url_for('checkout.place_order') }}" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="row g-4">
+      <!-- Shipping Information Form -->
+      <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+          <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+            <span class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 0.85rem;">1</span>
+            <span>Delivery & Shipping Address</span>
+          </h5>
+
+          <div class="row g-3">
+            <div class="col-12">
+              <label for="fullName" class="form-label small fw-semibold">Recipient Full Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="fullName" name="full_name" value="{{ user.full_name or user.username }}" required>
+            </div>
+
+            <div class="col-md-6">
+              <label for="email" class="form-label small fw-semibold">Email Address <span class="text-danger">*</span></label>
+              <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+            </div>
+
+            <div class="col-md-6">
+              <label for="phone" class="form-label small fw-semibold">Phone Number <span class="text-danger">*</span></label>
+              <input type="tel" class="form-control" id="phone" name="phone" placeholder="+1-555-0123" value="{{ user.phone or '' }}" required>
+            </div>
+
+            <div class="col-12">
+              <label for="shippingAddress" class="form-label small fw-semibold">Street Address <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="shippingAddress" name="shipping_address" rows="2" placeholder="House/Apartment #, Street name" required>{{ user.address or '' }}</textarea>
+            </div>
+
+            <div class="col-md-6">
+              <label for="city" class="form-label small fw-semibold">City / Town <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="city" name="city" placeholder="e.g. San Francisco" value="{{ user.city or '' }}" required>
+            </div>
+
+            <div class="col-md-6">
+              <label for="postalCode" class="form-label small fw-semibold">Postal / ZIP Code <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="postalCode" name="postal_code" placeholder="e.g. 94105" value="{{ user.postal_code or '' }}" required>
+            </div>
+
+            <div class="col-12">
+              <label for="notes" class="form-label small fw-semibold">Delivery Instructions / Notes (Optional)</label>
+              <input type="text" class="form-control" id="notes" name="notes" placeholder="e.g. Leave package with front security desk">
+            </div>
+          </div>
+
+          <!-- Google Maps Delivery Pin Selection Section -->
+          <div class="mt-4 pt-3 border-top">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+              <label class="form-label small fw-semibold mb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-geo-alt-fill text-danger"></i>
+                <span>Pinpoint Exact Delivery Location (Google Maps)</span>
+              </label>
+              <div class="d-flex align-items-center gap-2">
+                <span id="confirmedPill" class="badge bg-success-subtle text-success border border-success-subtle d-none">
+                  <i class="bi bi-check-circle-fill me-1"></i> Pin Confirmed
+                </span>
+              </div>
+            </div>
+
+            <!-- Action Toolbar for Map -->
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              <button type="button" id="btnDetectLocation" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                <i class="bi bi-crosshair me-1"></i> Detect My Location
+              </button>
+              <button type="button" id="btnGeocodeAddress" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                <i class="bi bi-search me-1"></i> Pin My Address
+              </button>
+              <button type="button" id="btnConfirmLocation" class="btn btn-outline-success btn-sm rounded-pill px-3">
+                <i class="bi bi-check2-circle me-1"></i> Confirm Location
+              </button>
+            </div>
+
+            <!-- Hidden Inputs for Lat / Lng -->
+            <input type="hidden" id="latitude" name="latitude" value="">
+            <input type="hidden" id="longitude" name="longitude" value="">
+
+            <!-- Coordinates Status Badge -->
+            <div class="mb-2">
+              <div id="coordsBadge" class="small text-muted">
+                <i class="bi bi-pin-map me-1"></i> Pin location not set (will use street address)
+              </div>
+            </div>
+
+            <!-- Map Viewport -->
+            <div id="checkoutMap" class="w-100 rounded-3 border overflow-hidden position-relative" style="height: 280px; min-height: 280px;">
+              <div class="d-flex align-items-center justify-content-center h-100 bg-light text-muted small">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                Loading map...
+              </div>
+            </div>
+
+            <div class="text-muted small mt-2" style="font-size: 0.8rem;">
+              <i class="bi bi-info-circle me-1"></i> Drag the marker or click anywhere on the map to pinpoint your exact doorstep. If map is offline, typed address will be saved.
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulated Payment Method -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+          <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+            <span class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 0.85rem;">2</span>
+            <span>Simulated Payment Method</span>
+          </h5>
+
+          <!-- Demo Disclaimer Alert -->
+          <div class="alert alert-info py-2 small d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-info-circle-fill fs-5"></i>
+            <div>
+              <strong>Demonstration Checkout:</strong> This web application simulates order placement for educational evaluation. No real currency is charged.
+            </div>
+          </div>
+
+          <div class="d-flex flex-column gap-3">
+            <!-- Option 1: Cash on Delivery -->
+            <label class="card p-3 border rounded-3 cursor-pointer d-flex flex-row align-items-center gap-3">
+              <input class="form-check-input mt-0" type="radio" name="payment_method" value="Cash on Delivery" checked>
+              <div class="flex-grow-1">
+                <div class="fw-bold"><i class="bi bi-cash-stack text-success me-2"></i> Cash on Delivery (COD)</div>
+                <div class="text-muted small">Pay with simulated cash or mobile wallet upon arrival of package.</div>
+              </div>
+              <span class="badge bg-success-subtle text-success">Recommended</span>
+            </label>
+
+            <!-- Option 2: Razorpay Test Mode -->
+<label class="card p-3 border rounded-3 cursor-pointer d-flex flex-row align-items-center gap-3">
+  <input
+    class="form-check-input mt-0"
+    type="radio"
+    name="payment_method"
+    value="Razorpay"
+  >
+
+  <div class="flex-grow-1">
+    <div class="fw-bold">
+      <i class="bi bi-shield-lock text-primary me-2"></i>
+      Pay Online with Razorpay
+    </div>
+
+    <div class="text-muted small">
+      Test Mode: Simulate payments using UPI, cards and net banking.
+      No real money will be deducted.
+    </div>
+  </div>
+
+  <span class="badge bg-primary-subtle text-primary">Test Mode</span>
+</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Review Sidebar -->
+      <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4 p-4 sticky-top" style="top: 90px;">
+          <h5 class="fw-bold mb-3">Your Order ({{ total_items }} items)</h5>
+
+          <!-- Mini Item List -->
+          <div class="mb-3" style="max-height: 280px; overflow-y: auto;">
+            {% for item in items %}
+              <div class="d-flex align-items-center gap-3 py-2 border-bottom">
+                <img src="{{ item.product.image_url }}" alt="{{ item.product.name }}" class="rounded" style="width: 52px; height: 52px; object-fit: cover;" onerror="this.src='/static/images/placeholder.svg'">
+                <div class="flex-grow-1 text-truncate">
+                  <div class="fw-semibold text-truncate small" title="{{ item.product.name }}">{{ item.product.name }}</div>
+                  <div class="text-muted small">Qty: {{ item.quantity }} &times; {{ item.product.price|currency }}</div>
+                </div>
+                <div class="fw-bold text-dark small text-end">
+                  {{ item.subtotal|currency }}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+          <!-- Price Calculation -->
+          <div class="d-flex justify-content-between mb-2 small">
+            <span class="text-muted">Subtotal:</span>
+            <span class="fw-semibold">{{ subtotal|currency }}</span>
+          </div>
+
+          <div class="d-flex justify-content-between mb-2 small">
+            <span class="text-muted">Shipping Fee:</span>
+            <span class="fw-semibold">
+              {% if shipping_fee == 0 %}
+                <span class="text-success">FREE</span>
+              {% else %}
+                {{ shipping_fee|currency }}
+              {% endif %}
+            </span>
+          </div>
+
+          <hr class="my-2">
+
+          <div class="d-flex justify-content-between align-items-baseline mb-4">
+            <span class="fw-bold fs-5">Total to Pay:</span>
+            <span class="fw-bold fs-4 text-primary">{{ grand_total|currency }}</span>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg rounded-pill w-100 fw-semibold shadow-sm mb-3">
+            <i class="bi bi-check2-circle me-1"></i> Place Order Now
+          </button>
+
+          <div class="text-muted small text-center">
+            By placing this order you confirm that this is a simulated transaction.
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    setupCheckoutDeliveryMap("{{ google_maps_api_key }}");
+  });
+</script>
+{% endblock %}

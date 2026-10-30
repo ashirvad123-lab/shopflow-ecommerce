@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - ShopFlow{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <!-- Breadcrumbs -->
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none">Home</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('main.products') }}" class="text-decoration-none">Products</a></li>
+      {% if product.category %}
+        <li class="breadcrumb-item"><a href="{{ url_for('main.products', category=product.category.slug) }}" class="text-decoration-none">{{ product.category.name }}</a></li>
+      {% endif %}
+      <li class="breadcrumb-item active text-truncate" style="max-width: 250px;" aria-current="page">{{ product.name }}</li>
+    </ol>
+  </nav>
+
+  <!-- Product Main Overview -->
+  <div class="card border-0 shadow-sm rounded-4 p-4 mb-5">
+    <div class="row g-4 align-items-center">
+      <!-- Product Image -->
+      <div class="col-lg-6">
+        <div class="position-relative">
+          <img src="{{ product.image_url }}" alt="{{ product.name }}" class="product-detail-img shadow-sm" data-fallback-src="{{ url_for('static', filename='images/placeholder.svg') }}">
+          {% if product.is_featured %}
+            <span class="badge-featured fs-6 px-3 py-2"><i class="bi bi-star-fill me-1"></i> Featured Product</span>
+          {% endif %}
+        </div>
+      </div>
+
+      
+      <div class="col-lg-6 ps-lg-4">
+        <!-- Category & Stock Status -->
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 fw-semibold">
+            {{ product.category.name if product.category else 'General' }}
+          </span>
+
+          {% if product.stock <= 0 %}
+            <span class="badge bg-danger text-white rounded-pill px-3 py-1">Out of Stock</span>
+          {% elif product.stock <= 5 %}
+            <span class="badge bg-warning text-dark rounded-pill px-3 py-1">
+              <i class="bi bi-exclamation-triangle-fill me-1"></i> Only {{ product.stock }} left in stock!
+            </span>
+          {% else %}
+            <span class="badge bg-success text-white rounded-pill px-3 py-1">
+              <i class="bi bi-check-circle-fill me-1"></i> In Stock ({{ product.stock }} units)
+            </span>
+          {% endif %}
+        </div>
+
+        <h1 class="fw-bold mb-3">{{ product.name }}</h1>
+
+        <!-- Price -->
+        <div class="d-flex align-items-baseline gap-3 mb-4">
+          <span class="display-6 fw-bold text-dark">{{ product.price|currency }}</span>
+          <span class="text-success small fw-semibold"><i class="bi bi-truck me-1"></i> Free delivery eligible</span>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-4">
+          <h2 class="h6 fw-semibold text-dark mb-2">Product Description</h2>
+          <p class="text-muted leading-relaxed">{{ product.description }}</p>
+        </div>
+
+        <!-- Add to Cart Form -->
+        {% if product.in_stock %}
+          <form class="form-add-to-cart mb-4" action="{{ url_for('cart.add_to_cart') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="product_id" value="{{ product.id }}">
+
+            <div class="row g-3 align-items-center">
+              <div class="col-auto">
+                <label for="quantityInput" class="form-label small fw-semibold mb-1">Quantity</label>
+                <div class="input-group" style="width: 140px;">
+                  <button class="btn btn-outline-secondary" type="button" data-quantity-action="decrease" aria-label="Decrease quantity">-</button>
+                  <input type="number" id="quantityInput" name="quantity" class="form-control text-center" value="1" min="1" max="{{ product.stock }}" required>
+                  <button class="btn btn-outline-secondary" type="button" data-quantity-action="increase" aria-label="Increase quantity">+</button>
+                </div>
+              </div>
+
+              <div class="col">
+                <label class="form-label d-none d-sm-block small mb-1">&nbsp;</label>
+                <div>
+                  <button type="submit" class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm w-100 fw-semibold">
+                    <i class="bi bi-cart-plus me-2"></i> Add to Cart
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        {% else %}
+          <div class="alert alert-secondary rounded-3 mb-4">
+            <i class="bi bi-info-circle me-1"></i> This item is currently out of stock. Please check back soon!
+          </div>
+        {% endif %}
+
+        <!-- Perks list -->
+        <div class="border-top pt-3">
+          <div class="row g-2 text-muted small">
+            <div class="col-sm-6 d-flex align-items-center gap-2">
+              <i class="bi bi-shield-check text-success fs-5"></i>
+              <span>Authentic Quality Assured</span>
+            </div>
+            <div class="col-sm-6 d-flex align-items-center gap-2">
+              <i class="bi bi-arrow-counterclockwise text-primary fs-5"></i>
+              <span>Simulated 30-Day Easy Returns</span>
+            </div>
+            <div class="col-sm-6 d-flex align-items-center gap-2">
+              <i class="bi bi-lightning-charge text-warning fs-5"></i>
+              <span>Instant Order Confirmation</span>
+            </div>
+            <div class="col-sm-6 d-flex align-items-center gap-2">
+              <i class="bi bi-credit-card text-info fs-5"></i>
+              <span>Cash on Delivery Supported</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Related Products -->
+  {% if related_products %}
+    <div class="mb-5">
+      <h3 class="fw-bold mb-4">Related Products in {{ product.category.name if product.category else 'this category' }}</h3>
+      <div class="row g-4">
+        {% for rel in related_products %}
+          <div class="col-xl-3 col-md-6">
+            <div class="product-card shadow-sm">
+              <div class="product-image-container">
+                <a href="{{ url_for('main.product_detail', product_id=rel.id) }}">
+                  <img src="{{ rel.image_url }}" alt="{{ rel.name }}" loading="lazy" data-fallback-src="{{ url_for('static', filename='images/placeholder.svg') }}">
+                </a>
+              </div>
+              <div class="product-card-body">
+                <h4 class="product-title fs-6">
+                  <a href="{{ url_for('main.product_detail', product_id=rel.id) }}">{{ rel.name }}</a>
+                </h4>
+                <div class="d-flex align-items-center justify-content-between mt-auto pt-2 border-top">
+                  <span class="fw-bold text-dark">{{ rel.price|currency }}</span>
+                  <a href="{{ url_for('main.product_detail', product_id=rel.id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                    View
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

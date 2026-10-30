@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}{% if product %}Edit Product - {{ product.name }}{% else %}Add New Product{% endif %} - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}" class="text-decoration-none">Admin Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('admin.products') }}" class="text-decoration-none">Products</a></li>
+      <li class="breadcrumb-item active" aria-current="page">{% if product %}Edit #{{ product.id }}{% else %}New Product{% endif %}</li>
+    </ol>
+  </nav>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+          <h3 class="fw-bold mb-0">
+            {% if product %}
+              <i class="bi bi-pencil-square text-primary me-2"></i> Edit Product
+            {% else %}
+              <i class="bi bi-plus-circle-fill text-primary me-2"></i> Add New Product
+            {% endif %}
+          </h3>
+          <a href="{{ url_for('admin.products') }}" class="btn btn-outline-secondary rounded-pill btn-sm px-3">
+            Cancel
+          </a>
+        </div>
+
+        <form action="" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-8">
+              <label for="name" class="form-label small fw-semibold">Product Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="name" name="name" value="{{ product.name if product else '' }}" required placeholder="e.g. Wireless Noise Cancelling Headphones">
+            </div>
+
+            <div class="col-md-4">
+              <label for="category_id" class="form-label small fw-semibold">Category <span class="text-danger">*</span></label>
+              <select class="form-select" id="category_id" name="category_id" required>
+                <option value="">Choose category...</option>
+                {% for cat in categories %}
+                  <option value="{{ cat.id }}" {% if product and product.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label for="price" class="form-label small fw-semibold">Price ($) <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" step="0.01" min="0" class="form-control" id="price" name="price" value="{{ product.price if product else '' }}" required placeholder="49.99">
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label for="stock" class="form-label small fw-semibold">Available Stock Quantity <span class="text-danger">*</span></label>
+              <input type="number" min="0" class="form-control" id="stock" name="stock" value="{{ product.stock if product else '10' }}" required>
+            </div>
+
+            <div class="col-12">
+              <label for="image_url" class="form-label small fw-semibold">Product Image URL</label>
+              <input type="url" class="form-control" id="image_url" name="image_url" value="{{ product.image_url if product else '' }}" placeholder="https://images.unsplash.com/photo-..." onchange="document.getElementById('imagePreview').src = this.value">
+              <div class="form-text small">Use a direct HTTPS image URL from Unsplash or local placeholder.</div>
+            </div>
+
+            <div class="col-12">
+              <label for="description" class="form-label small fw-semibold">Product Description <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="description" name="description" rows="4" required placeholder="Detailed specifications, dimensions, features, materials...">{{ product.description if product else '' }}</textarea>
+            </div>
+
+            <div class="col-12">
+              <div class="d-flex flex-wrap gap-4 pt-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="is_featured" name="is_featured" value="true" {% if product and product.is_featured %}checked{% endif %}>
+                  <label class="form-check-label small fw-semibold" for="is_featured">
+                    <i class="bi bi-star-fill text-warning me-1"></i> Feature this product on Homepage
+                  </label>
+                </div>
+
+                {% if product %}
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="true" {% if product.is_active %}checked{% endif %}>
+                    <label class="form-check-label small fw-semibold" for="is_active">
+                      Active (Visible to customers in store)
+                    </label>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Image Preview -->
+          <div class="p-3 bg-light rounded-3 mb-4 d-flex align-items-center gap-3">
+            <img id="imagePreview" src="{{ product.image_url if product and product.image_url else '/static/images/placeholder.svg' }}" alt="Preview" class="rounded shadow-sm" style="width: 70px; height: 70px; object-fit: cover;" onerror="this.src='/static/images/placeholder.svg'">
+            <div class="small text-muted">
+              <strong>Image Preview:</strong> Make sure image loads properly. If broken, our automatic fallback SVG will be displayed.
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2">
+            <a href="{{ url_for('admin.products') }}" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
+            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm">
+              <i class="bi bi-save me-1"></i> {% if product %}Save Product Changes{% else %}Create Product{% endif %}
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f1f5f9"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bgGrad)"/>
+  <g fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="130" y="80" width="140" height="110" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+    <circle cx="170" cy="115" r="14" fill="#e2e8f0" stroke="#94a3b8"/>
+    <path d="M132 170 L170 135 L210 170 L240 145 L268 175" fill="none" stroke="#94a3b8" stroke-width="2"/>
+  </g>
+  <text x="200" y="225" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" fill="#64748b" text-anchor="middle" font-weight="600">Product Image Placeholder</text>
+  <text x="200" y="245" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" fill="#94a3b8" text-anchor="middle">ShopFlow Store</text>
+</svg>

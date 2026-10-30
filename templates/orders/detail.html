@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}Order #{{ order.order_number }} - ShopFlow{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <!-- Breadcrumbs -->
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none">Home</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('orders.history') }}" class="text-decoration-none">My Orders</a></li>
+      <li class="breadcrumb-item active font-monospace" aria-current="page">{{ order.order_number }}</li>
+    </ol>
+  </nav>
+
+  <!-- Header Card -->
+  <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 border-bottom pb-3 mb-4">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <h3 class="fw-bold mb-0 font-monospace text-primary">#{{ order.order_number }}</h3>
+          <span class="badge {{ order.status_badge }} fs-6 rounded-pill px-3 py-1">{{ order.status }}</span>
+        </div>
+        <div class="text-muted small">
+          Placed on {{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary btn-sm rounded-pill px-3" href="{{ url_for('orders.invoice', order_id=order.id) }}">
+          <i class="bi bi-file-earmark-pdf me-1"></i> Download Invoice
+        </a>
+
+        {% if order.status in ['Order Placed', 'Pending', 'Confirmed'] %}
+          <form action="{{ url_for('orders.cancel_order', order_id=order.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this order?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label class="visually-hidden" for="cancellationReason">Cancellation reason (optional)</label>
+            <input id="cancellationReason" name="reason" maxlength="1000" class="form-control form-control-sm" placeholder="Reason (optional)">
+            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+              <i class="bi bi-x-circle me-1"></i> Cancel Order
+            </button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Order Tracking Visual Stepper -->
+    {% if order.status == 'Cancelled' %}
+      <div class="alert alert-danger d-flex align-items-center gap-3 p-3 rounded-3 mb-2">
+        <i class="bi bi-x-octagon-fill fs-3"></i>
+        <div>
+          <h5 class="fw-bold mb-0">Order Cancelled</h5>
+          <small>
+            Cancelled{% if order.cancelled_at %} on {{ order.cancelled_at.strftime('%b %d, %Y at %I:%M %p') }}{% endif %}.
+            {% if order.cancellation_reason %}Reason: {{ order.cancellation_reason }}{% endif %}
+            {% if order.refund_status != 'Not applicable' %} Refund status: {{ order.refund_status }}.{% endif %}
+          </small>
+        </div>
+      </div>
+    {% else %}
+      <div class="order-tracking-stepper">
+        <!-- Step 1: Placed -->
+        <div class="step-indicator {% if current_step >= 1 %}completed active{% endif %}">
+          <div class="step-circle">
+            <i class="bi bi-clipboard-check"></i>
+          </div>
+          <div class="step-label">Order Placed</div>
+          <small class="text-muted d-none d-md-block">{{ order.created_at.strftime('%b %d') }}</small>
+        </div>
+
+        <!-- Step 2: Confirmed -->
+        <div class="step-indicator {% if current_step > 2 %}completed{% elif current_step == 2 %}active{% endif %}">
+          <div class="step-circle">
+            <i class="bi bi-patch-check"></i>
+          </div>
+          <div class="step-label">Confirmed</div>
+          <small class="text-muted d-none d-md-block">Processing</small>
+        </div>
+
+        <!-- Step 3: Shipped -->
+        <div class="step-indicator {% if current_step > 3 %}completed{% elif current_step == 3 %}active{% endif %}">
+          <div class="step-circle">
+            <i class="bi bi-truck"></i>
+          </div>
+          <div class="step-label">Shipped</div>
+          <small class="text-muted d-none d-md-block">In Transit</small>
+        </div>
+
+        <!-- Step 4: Delivered -->
+        <div class="step-indicator {% if current_step == 4 %}completed active{% endif %}">
+          <div class="step-circle">
+            <i class="bi bi-house-door"></i>
+          </div>
+          <div class="step-label">Delivered</div>
+          <small class="text-muted d-none d-md-block">Arrived</small>
+        </div>
+      </div>
+    {% endif %}
+    <div class="small text-muted mt-3 d-flex flex-wrap gap-3">
+      <span>Last updated: {{ order.updated_at.strftime('%b %d, %Y at %I:%M %p') }}</span>
+      {% if order.estimated_delivery_at and order.status not in ['Delivered', 'Cancelled'] %}
+        <span>Estimated delivery: {{ order.estimated_delivery_at.strftime('%b %d, %Y') }}</span>
+      {% endif %}
+      {% if order.courier_name %}<span>Courier: {{ order.courier_name }}</span>{% endif %}
+      {% if order.tracking_number %}<span>Tracking number: {{ order.tracking_number }}</span>{% endif %}
+    </div>
+    {% if order.status_history %}
+      <div class="border-top mt-3 pt-3">
+        <h6 class="fw-bold">Status history</h6>
+        <ol class="small mb-0">
+          {% for event in order.status_history %}
+            <li class="mb-1"><strong>{{ event.status }}</strong> — {{ event.created_at.strftime('%b %d, %Y at %I:%M %p') }}{% if event.note and event.status != 'Order Placed' %}<span class="text-muted"> · {{ event.note }}</span>{% endif %}</li>
+          {% endfor %}
+        </ol>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="row g-4">
+    <!-- Ordered Items Table -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <h5 class="fw-bold mb-3">Items in This Order</h5>
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead class="text-muted small text-uppercase">
+              <tr>
+                <th scope="col">Product Item</th>
+                <th scope="col" class="text-center">Price</th>
+                <th scope="col" class="text-center">Quantity</th>
+                <th scope="col" class="text-end">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in order.items %}
+                <tr>
+                  <td>
+                    <div class="fw-bold text-dark">{{ item.product_name }}</div>
+                    {% if item.product_id %}
+                      <a href="{{ url_for('main.product_detail', product_id=item.product_id) }}" class="small text-decoration-none text-primary">
+                        View Product <i class="bi bi-box-arrow-up-right"></i>
+                      </a>
+                    {% endif %}
+                  </td>
+                  <td class="text-center text-muted">{{ item.price|currency }}</td>
+                  <td class="text-center fw-medium">{{ item.quantity }}</td>
+                  <td class="text-end fw-bold text-dark">{{ item.subtotal|currency }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order & Delivery Info Card -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <h5 class="fw-bold mb-3">Delivery Information</h5>
+        <div class="small mb-3">
+          <div class="text-muted">Recipient Name:</div>
+          <div class="fw-bold text-dark">{{ order.full_name }}</div>
+        </div>
+
+        <div class="small mb-3">
+          <div class="text-muted">Delivery Address:</div>
+          <div class="fw-bold text-dark">
+            {{ order.shipping_address }}<br>
+            {{ order.city }}, {{ order.postal_code }}
+          </div>
+          {% if order.has_coordinates %}
+            <div class="mt-1">
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                <i class="bi bi-geo-alt-fill me-1"></i> GPS: {{ "%.4f"|format(order.latitude) }}, {{ "%.4f"|format(order.longitude) }}
+              </span>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Google Maps Delivery Destination Preview -->
+        <div class="mb-3">
+          <label class="form-label small fw-semibold text-muted d-flex align-items-center gap-1 mb-1">
+            <i class="bi bi-map text-primary"></i> Delivery Location Map
+          </label>
+          <div id="orderMap"
+               data-lat="{{ order.latitude or '' }}"
+               data-lng="{{ order.longitude or '' }}"
+               data-address="{{ order.shipping_address }}, {{ order.city }} {{ order.postal_code }}"
+               data-maps-url="{{ order.google_maps_url }}"
+               class="w-100 rounded-3 border overflow-hidden position-relative mb-2"
+               style="height: 220px; min-height: 220px;">
+            <div class="d-flex align-items-center justify-content-center h-100 bg-light text-muted small">
+              <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+              Loading map...
+            </div>
+          </div>
+
+          <a href="{{ order.google_maps_url }}" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill w-100 mb-2">
+            <i class="bi bi-box-arrow-up-right me-1"></i> Open Destination in Google Maps
+          </a>
+
+          <div class="text-muted small border-start border-3 border-info ps-2 py-1" style="font-size: 0.75rem;">
+            <strong>Destination Map:</strong> Pinpoints customer-confirmed delivery doorstep. Real-time courier tracking is not simulated without live fleet GPS hardware.
+          </div>
+        </div>
+
+        <div class="small mb-3">
+          <div class="text-muted">Contact Info:</div>
+          <div class="fw-bold text-dark">{{ order.phone }}</div>
+          <div class="text-muted">{{ order.email }}</div>
+        </div>
+
+        {% if order.notes %}
+          <div class="small mb-3 p-2 bg-light rounded">
+            <div class="text-muted">Delivery Notes:</div>
+            <div class="text-dark">{{ order.notes }}</div>
+          </div>
+        {% endif %}
+
+        <hr class="my-3">
+
+        <h5 class="fw-bold mb-3">Payment Summary</h5>
+        <div class="d-flex justify-content-between mb-2 small">
+          <span class="text-muted">Payment Method:</span>
+          <span class="fw-semibold">{{ order.payment_method }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2 small">
+          <span class="text-muted">Payment Status:</span>
+          <span class="badge bg-light text-dark border">{{ order.payment_status }}</span>
+        </div>
+
+        <div class="d-flex justify-content-between mb-2 small">
+          <span class="text-muted">Items Subtotal:</span>
+          <span class="fw-semibold">{{ order.subtotal|currency }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-3 small">
+          <span class="text-muted">Discount:</span>
+          <span class="fw-semibold">-{{ order.discount_amount|currency }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-3 small">
+          <span class="text-muted">Shipping:</span>
+          <span class="fw-semibold">
+            {% if order.shipping_fee == 0 %}
+              <span class="text-success">FREE</span>
+            {% else %}
+              {{ order.shipping_fee|currency }}
+            {% endif %}
+          </span>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-baseline border-top pt-2">
+          <span class="fw-bold fs-6">Grand Total:</span>
+          <span class="fw-bold fs-4 text-primary">{{ order.total_amount|currency }}</span>
+        </div>
+        {% if order.refund_status != 'Not applicable' %}
+          <div class="d-flex justify-content-between mt-2 small">
+            <span class="text-muted">Refund status:</span>
+            <span class="fw-semibold">{{ order.refund_status }}</span>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    setupOrderDestinationMap("{{ google_maps_api_key }}");
+  });
+</script>
+{% endblock %}

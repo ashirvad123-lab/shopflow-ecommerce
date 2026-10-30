@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Order Confirmed - #{{ order.order_number }} - ShopFlow{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <!-- Success Header Card -->
+      <div class="card border-0 shadow-sm rounded-4 text-center p-5 mb-4">
+        <div class="mb-3">
+          <div class="rounded-circle bg-success-subtle text-success mx-auto d-flex align-items-center justify-content-center shadow-sm" style="width: 84px; height: 84px;">
+            <i class="bi bi-check-lg display-4"></i>
+          </div>
+        </div>
+
+        <span class="badge bg-success-subtle text-success px-3 py-1 rounded-pill fw-semibold mx-auto mb-2">Order Placed</span>
+        <h2 class="fw-bold mb-2">Thank you for your order, {{ order.full_name }}!</h2>
+        <p class="text-muted mb-4">
+          We have received your order. You can follow its progress from your order details.
+        </p>
+
+        <div class="p-3 bg-light rounded-3 d-inline-flex flex-wrap justify-content-center gap-4 text-start mx-auto mb-4 border">
+          <div>
+            <div class="text-muted small">Order Number</div>
+            <div class="fw-bold font-monospace text-primary fs-6">{{ order.order_number }}</div>
+          </div>
+          <div class="border-start ps-4">
+            <div class="text-muted small">Date Placed</div>
+            <div class="fw-bold fs-6">{{ order.created_at.strftime('%B %d, %Y - %I:%M %p') }}</div>
+          </div>
+          <div class="border-start ps-4">
+            <div class="text-muted small">Status</div>
+            <div><span class="badge {{ order.status_badge }}">{{ order.status }}</span></div>
+          </div>
+          {% if order.estimated_delivery_at %}
+            <div class="border-start ps-4">
+              <div class="text-muted small">Estimated delivery</div>
+              <div class="fw-bold fs-6">{{ order.estimated_delivery_at.strftime('%b %d, %Y') }}</div>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="d-flex flex-wrap justify-content-center gap-3">
+          <a href="{{ url_for('orders.detail', order_id=order.id) }}" class="btn btn-primary rounded-pill px-4 shadow-sm fw-medium">
+            <i class="bi bi-geo-alt-fill me-1"></i> Track Order Live
+          </a>
+          <a href="{{ url_for('orders.history') }}" class="btn btn-outline-secondary rounded-pill px-4 fw-medium">
+            <i class="bi bi-clock-history me-1"></i> My Order History
+          </a>
+          <a href="{{ url_for('main.products') }}" class="btn btn-outline-primary rounded-pill px-4 fw-medium">
+            Continue Shopping
+          </a>
+        </div>
+      </div>
+
+      <!-- Receipt Breakdown Card -->
+      <div class="card border-0 shadow-sm rounded-4 p-4">
+        <h5 class="fw-bold mb-3 border-bottom pb-2">Order Receipt Summary</h5>
+
+        <div class="table-responsive mb-3">
+          <table class="table align-middle">
+            <thead class="text-muted small">
+              <tr>
+                <th scope="col">Product Item</th>
+                <th scope="col" class="text-center">Price</th>
+                <th scope="col" class="text-center">Quantity</th>
+                <th scope="col" class="text-end">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in order.items %}
+                <tr>
+                  <td>
+                    <div class="fw-semibold text-dark">{{ item.product_name }}</div>
+                  </td>
+                  <td class="text-center text-muted">{{ item.price|currency }}</td>
+                  <td class="text-center">{{ item.quantity }}</td>
+                  <td class="text-end fw-bold text-dark">{{ item.subtotal|currency }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="row g-4 border-top pt-3">
+          <!-- Shipping info recap -->
+          <div class="col-md-6">
+            <h6 class="fw-bold text-muted small text-uppercase mb-2">Delivery Address</h6>
+            <div class="small text-dark">
+              <strong>{{ order.full_name }}</strong><br>
+              {{ order.shipping_address }}<br>
+              {{ order.city }}, {{ order.postal_code }}<br>
+              Phone: {{ order.phone }}<br>
+              Email: {{ order.email }}
+            </div>
+            <div class="mt-2 small text-muted">
+              <strong>Payment Method:</strong> {{ order.payment_method }} ({{ order.payment_status }})
+            </div>
+          </div>
+
+          <!-- Totals recap -->
+          <div class="col-md-6 text-end">
+            <div class="d-flex justify-content-between mb-1 small">
+              <span class="text-muted">Subtotal:</span>
+              <span class="fw-semibold">{{ order.subtotal|currency }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-1 small">
+              <span class="text-muted">Shipping Fee:</span>
+              <span class="fw-semibold">
+                {% if order.shipping_fee == 0 %}
+                  <span class="text-success">FREE</span>
+                {% else %}
+                  {{ order.shipping_fee|currency }}
+                {% endif %}
+              </span>
+            </div>
+            <hr class="my-2">
+            <div class="d-flex justify-content-between align-items-baseline mb-2">
+              <span class="fw-bold fs-6">Total Amount:</span>
+              <span class="fw-bold fs-4 text-primary">{{ order.total_amount|currency }}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

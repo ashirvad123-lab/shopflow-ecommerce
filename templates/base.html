@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}ShopFlow - Modern E-Commerce Platform{% endblock %}</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <div class="bg-dark text-white py-1 px-3 fs-8 border-bottom border-secondary-subtle">
+    <div class="container d-flex justify-content-between align-items-center flex-wrap small">
+      <div>
+        <i class="bi bi-mortarboard-fill text-warning me-1"></i>
+        <span>B.Tech CSE Project &bull; Fully Functional E-Commerce System</span>
+      </div>
+      <div class="d-none d-md-flex align-items-center gap-3">
+        <span><i class="bi bi-truck me-1"></i> Free Shipping over $50</span>
+        <span>&bull;</span>
+        <span><i class="bi bi-shield-check me-1"></i> Simulated Demo Checkout</span>
+      </div>
+    </div>
+  </div>
+
+  
+  <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top py-2 shadow-sm">
+    <div class="container">
+      
+      <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('main.index') }}">
+        <i class="bi bi-bag-check-fill text-primary fs-3"></i>
+        <span class="fs-4 brand-gradient fw-bold">ShopFlow</span>
+      </a>
+
+      
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarMain">
+      
+        <form class="d-flex mx-lg-auto my-2 my-lg-0 search-navbar" action="{{ url_for('main.products') }}" method="GET">
+          <div class="input-group">
+            <input class="form-control rounded-start-pill ps-3" type="search" name="search" placeholder="Search products, brands, essentials..." value="{{ request.args.get('search', '') }}" aria-label="Search">
+            <button class="btn btn-primary rounded-end-pill px-3" type="submit">
+              <i class="bi bi-search"></i>
+            </button>
+          </div>
+        </form>
+
+        
+        <ul class="navbar-nav align-items-lg-center gap-2 mt-2 mt-lg-0">
+          <li class="nav-item">
+            <a class="nav-link fw-medium" href="{{ url_for('main.products') }}">
+              <i class="bi bi-grid me-1"></i> All Products
+            </a>
+          </li>
+
+        
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle fw-medium" href="#" id="categoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Categories
+            </a>
+            <ul class="dropdown-menu shadow border-0" aria-labelledby="categoriesDropdown">
+              {% for cat in nav_categories %}
+                <li>
+                  <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="{{ url_for('main.products', category=cat.slug) }}">
+                    <i class="bi {{ cat.icon }} text-primary"></i>
+                    <span>{{ cat.name }}</span>
+                  </a>
+                </li>
+              {% else %}
+                <li><a class="dropdown-item" href="{{ url_for('main.products') }}">Browse All</a></li>
+              {% endfor %}
+            </ul>
+          </li>
+
+          
+          <li class="nav-item">
+            <a class="btn btn-outline-secondary position-relative rounded-pill px-3 py-1 d-inline-flex align-items-center gap-2" href="{{ url_for('cart.view_cart') }}">
+              <i class="bi bi-cart3 fs-5 text-primary"></i>
+              <span class="d-none d-sm-inline fw-semibold">Cart</span>
+              <span class="badge bg-primary text-white cart-badge cart-badge-pill {% if nav_cart_count == 0 %}d-none{% endif %}">
+                {{ nav_cart_count }}
+              </span>
+            </a>
+          </li>
+
+        
+          {% if current_user.is_authenticated %}
+            {% if current_user.is_admin %}
+              <li class="nav-item">
+                <a class="btn btn-danger btn-sm rounded-pill px-3 text-white fw-semibold d-inline-flex align-items-center gap-1 shadow-sm" href="{{ url_for('admin.dashboard') }}">
+                  <i class="bi bi-speedometer2"></i> Admin Panel
+                </a>
+              </li>
+            {% endif %}
+
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 fw-medium" href="#" id="userMenuDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <div class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-weight: 700;">
+                  {{ current_user.username[0]|upper }}
+                </div>
+                <span>{{ current_user.full_name or current_user.username }}</span>
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="userMenuDropdown">
+                <li class="dropdown-header text-muted small">Signed in as <strong>{{ current_user.username }}</strong> ({{ current_user.role|capitalize }})</li>
+                <li><a class="dropdown-item py-2" href="{{ url_for('orders.history') }}"><i class="bi bi-box-seam text-primary me-2"></i> My Orders</a></li>
+                <li><a class="dropdown-item py-2" href="{{ url_for('auth.profile') }}"><i class="bi bi-person-gear text-primary me-2"></i> Account Profile</a></li>
+                {% if current_user.is_admin %}
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item py-2 text-danger fw-medium" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-shield-lock me-2"></i> Admin Dashboard</a></li>
+                {% endif %}
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item py-2 text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i> Sign Out</a></li>
+              </ul>
+            </li>
+          {% else %}
+            <li class="nav-item">
+              <a class="btn btn-outline-primary rounded-pill px-3 py-1 fw-medium" href="{{ url_for('auth.login') }}">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="btn btn-primary rounded-pill px-3 py-1 fw-medium shadow-sm" href="{{ url_for('auth.register') }}">
+                Register
+              </a>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Flash Messages -->
+  <div class="container mt-3">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show shadow-sm d-flex align-items-center justify-content-between" role="alert">
+            <div class="d-flex align-items-center gap-2">
+              {% if category == 'success' %}
+                <i class="bi bi-check-circle-fill fs-5 text-success"></i>
+              {% elif category in ['danger', 'error'] %}
+                <i class="bi bi-exclamation-triangle-fill fs-5 text-danger"></i>
+              {% elif category == 'warning' %}
+                <i class="bi bi-exclamation-circle-fill fs-5 text-warning"></i>
+              {% else %}
+                <i class="bi bi-info-circle-fill fs-5 text-primary"></i>
+              {% endif %}
+              <div>{{ message }}</div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <main class="py-4">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="bg-white border-top mt-auto py-5">
+    <div class="container">
+      <div class="row g-4 justify-content-between">
+        
+        <div class="col-lg-4 col-md-6">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-bag-check-fill text-primary fs-3"></i>
+            <span class="fs-4 brand-gradient fw-bold">ShopFlow</span>
+          </div>
+          <p class="text-muted small">
+            A complete, production-ready full-stack E-Commerce web application built with Python Flask, PostgreSQL/SQLite, Bootstrap 5, and RESTful APIs for academic evaluation and real-world reference.
+          </p>
+          <div class="d-flex gap-2">
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Flask 3.x</span>
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">SQLAlchemy</span>
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Bootstrap 5</span>
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">REST API</span>
+          </div>
+        </div>
+
+      
+        <div class="col-lg-2 col-md-3 col-6">
+          <h6 class="fw-bold text-dark mb-3">Quick Navigation</h6>
+          <ul class="list-unstyled small d-flex flex-column gap-2 mb-0">
+            <li><a href="{{ url_for('main.index') }}" class="text-decoration-none text-muted">Home</a></li>
+            <li><a href="{{ url_for('main.products') }}" class="text-decoration-none text-muted">All Products</a></li>
+            <li><a href="{{ url_for('cart.view_cart') }}" class="text-decoration-none text-muted">Shopping Cart</a></li>
+            <li><a href="{{ url_for('orders.history') }}" class="text-decoration-none text-muted">Order History</a></li>
+            <li><a href="{{ url_for('main.about') }}" class="text-decoration-none text-muted">About Project</a></li>
+          </ul>
+        </div>
+
+      
+        <div class="col-lg-2 col-md-3 col-6">
+          <h6 class="fw-bold text-dark mb-3">Top Categories</h6>
+          <ul class="list-unstyled small d-flex flex-column gap-2 mb-0">
+            {% for cat in nav_categories %}
+              <li>
+                <a href="{{ url_for('main.products', category=cat.slug) }}" class="text-decoration-none text-muted">
+                  {{ cat.name }}
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="p-3 bg-light rounded-3 border">
+            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-key-fill text-primary me-1"></i> Demo Credentials</h6>
+            <p class="small text-muted mb-2">For live project assessment and viva demonstration:</p>
+            <div class="small">
+              <div><strong>Admin:</strong> <code>admin@shop.com</code> / <code>admin123</code></div>
+              <div class="mt-1"><strong>User:</strong> <code>user@shop.com</code> / <code>user123</code></div>
+            </div>
+            <div class="mt-2 text-muted" style="font-size: 0.75rem;">
+              <i class="bi bi-info-circle me-1"></i> Simulated checkout (Cash on Delivery enabled).
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-4 text-muted">
+
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 small text-muted">
+        <div>&copy; 2026 ShopFlow E-Commerce Platform. Built for B.Tech Computer Science Assignment.</div>
+        <div class="d-flex gap-3">
+          <a href="{{ url_for('main.about') }}" class="text-muted text-decoration-none">Project Docs</a>
+          <span>&bull;</span>
+          <a href="{{ url_for('main.contact') }}" class="text-muted text-decoration-none">Support & Contact</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+ 
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/maps.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>
